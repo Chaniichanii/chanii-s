@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蒂洛薇 数据分析报告 | 下滑归因 + 竞品对标</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#f5f6fa;color:#2c3e50}
+.header{background:linear-gradient(135deg,#c0392b 0%,#8e44ad 100%);padding:32px 48px;color:#fff}
+.header h1{font-size:24px;font-weight:800}
+.header .sub{font-size:13px;color:rgba(255,255,255,.8);margin-top:6px}
+.header .badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.header .badge{background:rgba(255,255,255,.15);padding:4px 14px;border-radius:20px;font-size:12px}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+
+.section{background:#fff;border-radius:12px;padding:24px 28px;margin-bottom:18px;box-shadow:0 1px 8px rgba(0,0,0,.05)}
+.sec-title{font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.sec-title .icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.sec-sub{font-size:12px;color:#999;margin-bottom:14px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:#fafbfc;border-radius:10px;padding:16px;border:1px solid #eef1f5;border-top:3px solid #c0392b;text-align:center}
+.kpi-card.kpi-down{border-top-color:#e74c3c}
+.kpi-card.kpi-warn{border-top-color:#f39c12}
+.kpi-label{font-size:11px;color:#999;margin-bottom:4px}
+.kpi-value{font-size:26px;font-weight:700;color:#1a1a2e}
+.kpi-change{font-size:11px;margin-top:4px}
+.kpi-change.down{color:#e74c3c}
+.kpi-change.up{color:#27ae60}
+
+.tag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700}
+.tag-red{background:#ffeaea;color:#e74c3c}
+.tag-green{background:#e8f5e9;color:#27ae60}
+.tag-orange{background:#fff3e0;color:#f39c12}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.insight-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.insight-box{background:#fafbfc;border-radius:10px;padding:16px;border:1px solid #eef1f5}
+.insight-box h4{font-size:13px;color:#666;margin-bottom:8px}
+.insight-box ul{font-size:12px;color:#666;line-height:2;padding-left:14px}
+
+.advice-box{background:linear-gradient(135deg,#fff8e1,#fff3e0);border:1px solid #ffe0b2;border-radius:10px;padding:16px 20px;margin-top:16px}
+.advice-box h4{font-size:13px;color:#e67e22;margin-bottom:6px}
+.advice-item{font-size:12px;color:#555;line-height:2;padding-left:12px;border-left:2px solid #ffe0b2;margin-top:4px}
+
+.finding-box{background:linear-gradient(135deg,#fce4ec,#f3e5f5);border:1px solid #f8bbd0;border-radius:10px;padding:16px 20px;margin-top:16px}
+.finding-box h4{font-size:13px;color:#c62828;margin-bottom:6px}
+
+.bar-chart{margin-top:8px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.bar-label{font-size:10px;color:#888;width:100px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:18px;background:#eef1f5;border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:9px;color:#fff;font-weight:600}
+.bar-ref{position:absolute;top:0;bottom:0;border-left:2px dashed #ff9800;z-index:1}
+.bar-val{font-size:10px;color:#555;width:65px;flex-shrink:0}
+
+.compare-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:12px}
+.compare-table th{background:#f5f6fa;padding:9px 10px;text-align:center;font-weight:600;color:#666;font-size:10px;border-bottom:2px solid #e0e0e0}
+.compare-table td{padding:9px 10px;text-align:center;border-bottom:1px solid #f0f0f0}
+.compare-table tr:hover td{background:#fafbfc}
+
+.radar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.radar-card{background:#fafbfc;border-radius:10px;padding:14px;border:1px solid #eee;text-align:center}
+.radar-card .rc-name{font-size:12px;font-weight:700;color:#333;margin-bottom:10px}
+.radar-bars{display:flex;flex-direction:column;gap:6px}
+.radar-bar-row{display:flex;align-items:center;gap:6px}
+.radar-bar-label{font-size:9px;color:#888;width:50px;text-align:right;flex-shrink:0}
+.radar-bar-track{flex:1;height:12px;background:#eef1f5;border-radius:6px;overflow:hidden}
+.radar-bar-fill{height:100%;border-radius:6px}
+.radar-bar-fill.good{background:linear-gradient(90deg,#43e97b,#81c784)}
+.radar-bar-fill.mid{background:linear-gradient(90deg,#ffb74d,#ffcc02)}
+.radar-bar-fill.bad{background:linear-gradient(90deg,#f5576c,#ef5350)}
+.radar-bar-val{font-size:9px;color:#555;width:26px;flex-shrink:0}
+
+.room-card{background:#fafbfc;border-radius:10px;padding:14px;border:1px solid #eef1f5}
+.room-card .rn{font-size:12px;font-weight:700;color:#333;margin-bottom:3px}
+.room-card .rc{font-size:10px;color:#aaa;margin-bottom:10px}
+.metric-list{display:flex;flex-direction:column;gap:5px}
+.metric-item{display:flex;justify-content:space-between;align-items:center;font-size:10px}
+.ml{color:#999}
+.mv{font-weight:600}
+.mv.good{color:#27ae60}
+.mv.bad{color:#e74c3c}
+.mv.neutral{color:#f39c12}
+
+.vs-card{background:#fafbfc;border-radius:10px;padding:18px;border:2px solid #eef1f5}
+.vs-card h4{font-size:14px;font-weight:700;margin-bottom:12px}
+.vs-metric{display:flex;justify-content:space-between;font-size:11px;line-height:2.2}
+.vs-label{color:#888;width:100px}
+.vs-dl{color:#c0392b;font-weight:600;width:130px}
+.vs-dp{color:#4facfe;font-weight:600;width:130px}
+.vs-winner{font-size:10px;width:90px;text-align:right}
+
+@media(max-width:1200px){.grid-4,.radar-grid{grid-template-columns:repeat(2,1fr)}.grid-2,.insight-row{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){.grid-4,.radar-grid,.kpi-grid{grid-template-columns:repeat(2,1fr)}.header{padding:20px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>蒂洛薇 数据分析报告 | 下滑归因 + 竞品对标</h1>
+<div class="sub">分析周期：2026年6月1日 — 7月5日（35天）| 蒂洛薇未参与618大促活动 | 品类：气垫/粉膏/散粉/粉饼</div>
+<div class="badges">
+<span class="badge">📉 环比上期消耗-36.4%</span>
+<span class="badge">⚠️ 计价率+4.9%</span>
+<span class="badge">📊 四品类×四维度</span>
+</div>
+</div>
+
+<div class="container">
+
+<!-- ====== 报告A：KPI概览 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c)">📋</div>报告A · 一、蒂洛薇整体数据概览</div>
+<div class="sec-sub">6.1-7.5 vs 上期（环比），四品类+整体+分链路</div>
+
+<div class="kpi-grid">
+<div class="kpi-card kpi-down"><div class="kpi-label">整体日均消耗</div><div class="kpi-value">8.82<span style="font-size:14px">万</span></div><div class="kpi-change down">↓ 36.4%</div></div>
+<div class="kpi-card kpi-down"><div class="kpi-label">整体下单ROI</div><div class="kpi-value">1.70</div><div class="kpi-change down">↓ 4.6%</div></div>
+<div class="kpi-card kpi-warn"><div class="kpi-label">整体计价率</div><div class="kpi-value">1.17</div><div class="kpi-change down" style="color:#e74c3c">↑ 4.9%</div></div>
+<div class="kpi-card"><div class="kpi-label">直播日均消耗</div><div class="kpi-value">7.85<span style="font-size:14px">万</span></div><div class="kpi-change down">↓ 37.8%</div></div>
+<div class="kpi-card"><div class="kpi-label">小店日均消耗</div><div class="kpi-value">0.97<span style="font-size:14px">万</span></div><div class="kpi-change down">↓ 21.8%</div></div>
+<div class="kpi-card"><div class="kpi-label">小店下单ROI</div><div class="kpi-value">1.88</div><div class="kpi-change up">优于直播1.67</div></div>
+</div>
+
+<div style="margin-top:20px">
+<div style="font-size:14px;font-weight:600;color:#555;margin-bottom:8px">分品类核心指标对比</div>
+<div style="overflow-x:auto"><table class="compare-table">
+<thead><tr><th>品类</th><th>日均消耗(万)</th><th>消耗环比</th><th>下单ROI</th><th>ROI环比</th><th>计价率</th><th>计价率环比</th></tr></thead>
+<tbody>
+<tr><td><strong>蒂洛薇整体</strong></td><td>8.82</td><td style="color:#e74c3c">↓36.4%</td><td>1.70</td><td style="color:#e74c3c">↓4.6%</td><td>1.17</td><td style="color:#e74c3c">↑4.9%</td></tr>
+<tr><td>蒂洛薇水晶气垫(气垫)</td><td>4.21</td><td style="color:#e74c3c">↓31.8%</td><td>1.73</td><td style="color:#e74c3c">↓5.1%</td><td>1.15</td><td style="color:#e74c3c">↑5.3%</td></tr>
+<tr><td>蒂洛薇彩妆(粉膏)</td><td>2.18</td><td style="color:#27ae60">↑2.5%</td><td>1.71</td><td style="color:#e74c3c">↓2.8%</td><td>1.16</td><td style="color:#e74c3c">↑2.8%</td></tr>
+<tr><td>蒂洛薇美妆(散粉)</td><td>1.66</td><td style="color:#e74c3c">↓63.6%</td><td>1.67</td><td style="color:#e74c3c">↓3.1%</td><td>1.20</td><td style="color:#e74c3c">↑4.4%</td></tr>
+<tr><td>蒂洛薇底妆(粉饼)</td><td>0.75</td><td style="color:#e74c3c">↓24.5%</td><td>1.54</td><td style="color:#e74c3c">↓15.1%</td><td>1.28</td><td style="color:#e74c3c">↑13.8%</td></tr>
+</tbody></table></div>
+</div>
+
+<div class="finding-box">
+<h4>🔍 下滑趋势核心发现</h4>
+<div class="advice-item">
+<strong>1. 消耗和ROI双双下滑，但消耗下滑（-36.4%）远大于ROI下滑（-4.6%）</strong>，说明核心问题是「拿不到量」而非「效率恶化」。未参与618大促是重要外部因素——竞品在大促期间大量放量抢占了流量份额。<br><br>
+<strong>2. 消耗峰值出现在6/3-6/8期间（10~18万/天），此后持续走低</strong>，7月初降至4~6万/天。35天中有7天计价率>1.2（成本异常），ROI最低1.58出现在6/11。<br><br>
+<strong>3. 蒂洛薇底妆(粉饼)是最大问题品类</strong>：计价率1.28（+13.8%），35天中26天计价率>1.2（74%异常），ROI仅1.54且环比-15.1%，成本失控严重。<br><br>
+<strong>4. 小店链路表现优于直播</strong>：小店ROI 1.88 vs 直播1.67，且计价率1.08远低于直播1.18。但小店消耗仅占11%，预算占比严重偏低。
+</div>
+</div>
+</div>
+
+<!-- ====== 报告A：日趋势图 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#e74c3c,#f39c12)">📈</div>报告A · 二、整体日消耗×ROI趋势 + 分品类趋势</div>
+<div class="sec-sub">红色=计价率>1.2 | 橙色=消耗异常高 | 绿色=正常 | 红色虚线=计价率1.2警戒线</div>
+
+<div id="daily-chart"></div>
+
+<div style="margin-top:20px">
+<div style="font-size:14px;font-weight:600;color:#555;margin-bottom:8px">分品类日消耗×ROI趋势（点击切换）</div>
+<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;border-bottom:2px solid #e0e0e0;padding-bottom:8px" id="cat-tabs"></div>
+<div id="cat-chart"></div>
+</div>
+
+<div class="insight-box">
+<div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#f39c12;font-weight:700;margin-bottom:4px">💡 一句话说明</div>
+<div style="font-size:13px;color:#5d4037">消耗从6月初的10~18万持续下滑至7月初的4~6万，降幅超60%。6/11出现ROI最低点1.58，同时消耗骤降至5.46万，说明该天存在严重的竞价成本问题。7月初ROI略有回升至1.7~1.9，但消耗已大幅萎缩。</div>
+<div style="font-size:13px;color:#bf360c;margin-top:4px;font-weight:500">📌 建议：排查6/11前后的出价策略和人群定向变化；蒂洛薇底妆(粉饼)计价率>1.2达26天，建议暂停该品类投放或大幅缩减预算。</div>
+</div>
+</div>
+
+<!-- ====== 报告B：四维度雷达图 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#667eea,#764ba2)">📊</div>报告B · 一、蒂洛薇四直播间 四维度综合评分</div>
+<div class="sec-sub">同行均值=50分基准（对比17个同行直播间），标准化到0-100分</div>
+<div class="radar-grid" id="radar-grid"></div>
+</div>
+
+<!-- ====== 报告B：四维度详细分析 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">⚖️</div>报告B · 二、四维度 逐直播间 对比分析</div>
+
+<div style="margin-top:12px"><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px">🏗️ 维度一：创意基建</div>
+<div class="grid-4" id="cb-rooms"></div>
+<div class="bar-chart" id="cb-chart"></div>
+<div class="insight-row">
+<div class="insight-box"><h4>⚠️ 全面劣势</h4><ul><li>四个直播间创意ID数全部低于同行均值（-23%~-58%），蒂洛薇底妆仅143（-58%）</li><li>爆款素材数同样全面落后（-15%~-80%），蒂洛薇美妆仅5个爆款（-75%）</li></ul></div>
+<div class="insight-box"><h4>💡 影响</h4><ul><li>素材量不足直接限制拿量能力——创意ID少意味着系统探索空间小</li><li>爆款素材少意味着缺乏可规模化放量的优质素材</li><li>这是消耗持续下滑的底层原因之一</li></ul></div>
+</div></div>
+
+<div style="margin-top:24px"><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px">⚡ 维度二：创意效率</div>
+<div class="grid-4" id="ce-rooms"></div>
+<div class="bar-chart" id="ce-chart"></div>
+<div class="insight-row">
+<div class="insight-box"><h4>✅ 优势：CVR</h4><ul><li>四个直播间浅层CVR全部高于同行均值（+28%~+46%），蒂洛薇底妆CVR 16.19%（+46%）最高</li><li>素材的浅层转化能力其实不差</li></ul></div>
+<div class="insight-box"><h4>⚠️ 劣势：CTR+完播率</h4><ul><li>蒂洛薇水晶气垫CTR 1.55%（-13.7%）+完播28.5%（-25.3%），内容吸引力不足</li><li>蒂洛薇彩妆CTR 2.47%（+37%）是唯一亮点</li></ul></div>
+</div></div>
+
+<div style="margin-top:24px"><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px">📈 维度三：拿量效率</div>
+<div class="grid-4" id="ve-rooms"></div>
+<div class="bar-chart" id="ve-chart"></div>
+<div class="insight-row">
+<div class="insight-box"><h4>⚠️ 致命短板</h4><ul><li><strong>四个直播间计价率全部大幅高于同行</strong>（+11.8%~+22.4%）</li><li>蒂洛薇底妆计价率1.255（+22.4%）为全场最高</li><li>同行均值1.025，蒂洛薇最低的也是1.147</li></ul></div>
+<div class="insight-box"><h4>💡 根因</h4><ul><li>计价率高=获取GMV的单位成本高，直接拖累ROI</li><li>未参与618大促导致竞价劣势——竞品放量时蒂洛薇未跟进，被迫在更贵的流量池中竞争</li></ul></div>
+</div></div>
+
+<div style="margin-top:24px"><div style="font-size:15px;font-weight:600;color:#333;margin-bottom:8px">🎯 维度四：直播间效率</div>
+<div class="grid-4" id="le-rooms"></div>
+<div class="bar-chart" id="le-chart"></div>
+<div class="insight-row">
+<div class="insight-box"><h4>✅ 优势：进播率</h4><ul><li>四个直播间进播率全部高于同行（+21%~+57%），蒂洛薇彩妆进播率1.78%（+57%）最高</li><li>商品点击率整体优于同行</li></ul></div>
+<div class="insight-box"><h4>⚠️ 劣势：下单率</h4><ul><li>四个直播间下单率全部低于同行均值（-2%~-17%）</li><li>蒂洛薇彩妆下单率14.04%（-17.2%）最低</li><li>「进得来但转化不了」是核心问题</li></ul></div>
+</div></div>
+</div>
+
+<!-- ====== 报告B：vs DPDP深度对比 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#c0392b,#8e44ad)">🥊</div>报告B · 三、蒂洛薇 vs DPDP品牌店 · 核心差距</div>
+<div class="sec-sub">蒂洛薇水晶气垫(气垫) vs DPDP品牌店(气垫) —— 同品类头部对比，找出ROI差距根源</div>
+
+<div class="grid-2" style="margin-top:16px">
+<div class="vs-card">
+<h4>📊 核心指标对比</h4>
+<div class="vs-metric"><span class="vs-label">日均消耗</span><span class="vs-dl">蒂洛薇 2.71万</span><span class="vs-dp">DPDP 5.76万</span><span class="vs-winner" style="color:#4facfe">DPDP 2.1倍</span></div>
+<div class="vs-metric"><span class="vs-label">创意ID数</span><span class="vs-dl">259</span><span class="vs-dp">575</span><span class="vs-winner" style="color:#4facfe">DPDP 2.2倍</span></div>
+<div class="vs-metric"><span class="vs-label">爆款素材</span><span class="vs-dl">17</span><span class="vs-dp">42</span><span class="vs-winner" style="color:#4facfe">DPDP 2.5倍</span></div>
+<div class="vs-metric"><span class="vs-label">CTR</span><span class="vs-dl">1.55%</span><span class="vs-dp">1.70%</span><span class="vs-winner" style="color:#4facfe">DPDP +9.5%</span></div>
+<div class="vs-metric"><span class="vs-label">浅层CVR</span><span class="vs-dl" style="color:#27ae60">14.20% ✅</span><span class="vs-dp">7.93%</span><span class="vs-winner" style="color:#c0392b">蒂洛薇 +79%</span></div>
+<div class="vs-metric"><span class="vs-label">3秒完播率</span><span class="vs-dl">28.53%</span><span class="vs-dp">35.12%</span><span class="vs-winner" style="color:#4facfe">DPDP +23%</span></div>
+<div class="vs-metric"><span class="vs-label">计价率</span><span class="vs-dl" style="color:#e74c3c">1.147 ❌</span><span class="vs-dp" style="color:#27ae60">0.971 ✅</span><span class="vs-winner" style="color:#4facfe">DPDP -15%</span></div>
+<div class="vs-metric"><span class="vs-label">进播率</span><span class="vs-dl" style="color:#27ae60">1.38% ✅</span><span class="vs-dp">0.95%</span><span class="vs-winner" style="color:#c0392b">蒂洛薇 +46%</span></div>
+<div class="vs-metric"><span class="vs-label">下单率</span><span class="vs-dl">16.09%</span><span class="vs-dp">16.89%</span><span class="vs-winner" style="color:#888">基本持平</span></div>
+</div>
+<div class="vs-card">
+<h4>🔑 差距根源分析</h4>
+<div style="font-size:12px;color:#555;line-height:2">
+<strong>1. 素材量是最大的量级差距</strong><br>
+DPDP创意ID 575（是蒂洛薇的2.2倍），爆款42（2.5倍）。素材池的大小直接决定了系统可探索的流量空间。蒂洛薇素材不足 → 探索受限 → 拿量困难 → 消耗下滑。<br><br>
+<strong>2. 计价率差距15%是ROI差距的直接原因</strong><br>
+蒂洛薇计价率1.147 vs DPDP 0.971。获取同样的GMV，蒂洛薇要多花18%的成本。这解释了为什么蒂洛薇ROI始终拔不上去。<br><br>
+<strong>3. 蒂洛薇的优势（CVR+进播率）被计价率劣势抵消</strong><br>
+蒂洛薇浅层CVR比DPDP高79%，进播率高46%，说明「进来的流量质量好、转化能力强」。但计价率高18%说明「进来的流量成本太贵」——量少且贵，即使转化好也难盈利。<br><br>
+<strong>4. 未参与618大促的连锁反应</strong><br>
+竞品在大促期间大量放量（DPDP日耗5.76万），蒂洛薇未跟进 → 流量池被竞品抢占 → 蒂洛薇只能在剩余流量中竞价 → 出价被迫提高 → 计价率上升 → ROI下滑。
+</div>
+</div>
+</div>
+
+<div class="advice-box">
+<h4>💡 蒂洛薇 ROI 为什么一直拔不上去？</h4>
+<div class="advice-item">
+<strong>根本原因：素材基建薄弱 + 未参与大促 → 拿量困难 → 被迫高价抢量 → 计价率高企 → ROI被压制。</strong><br><br>
+蒂洛薇的漏斗模型是「窄口深转化」：CVR和进播率都不差（甚至优于DPDP），但素材量不足导致曝光层面就窄了，再加上未参与618大促进一步压缩了流量空间，最终只能在更贵的流量中竞争。<br><br>
+<strong>这不是转化能力的问题，而是拿量能力的问题。</strong>如果把素材量翻倍（追上DPDP的575），同时在下一次大促中积极参与放量，计价率有望从1.147降至1.05以下，ROI可以从1.73提升至1.90+。
+</div>
+</div>
+</div>
+
+<!-- ====== 总结与建议 ====== -->
+<div class="section">
+<div class="sec-title"><div class="icon" style="background:linear-gradient(135deg,#c0392b,#e74c3c)">🎯</div>总结与行动建议</div>
+
+<div class="grid-2" style="margin-top:16px">
+<div class="insight-box"><h4>📉 下滑原因总结</h4><ul>
+<li><strong>外部因素</strong>：未参与618大促，竞品大量放量抢占流量份额</li>
+<li><strong>素材瓶颈</strong>：创意ID和爆款素材全面落后同行，限制了拿量上限</li>
+<li><strong>计价率高企</strong>：四个品类计价率全面高于同行12%~22%，获取GMV成本过高</li>
+<li><strong>底妆品类失控</strong>：粉饼26/35天计价率>1.2，ROI仅1.54，严重拖累整体</li>
+<li><strong>小店占比过低</strong>：小店ROI 1.88优于直播1.67，但消耗仅占11%</li>
+</ul></div>
+<div class="advice-box" style="margin-top:0"><h4>📌 行动建议（按优先级）</h4><div class="advice-item">
+<strong>P0 · 紧急</strong><br>
+• 暂停或大幅缩减蒂洛薇底妆(粉饼)投放，计价率1.28已严重失控<br>
+• 排查6/11前后的出价策略，当天ROI仅1.58为最低点<br><br>
+<strong>P1 · 重要</strong><br>
+• 素材扩容：将创意ID数从当前259提升至500+，每日新增≥10条素材<br>
+• 小店链路放量：从11%提升至25%+，利用小店ROI 1.88的优势<br><br>
+<strong>P2 · 巩固</strong><br>
+• 下一次大促务必参与，避免再次被竞品挤压流量空间<br>
+• 蒂洛薇彩妆(粉膏)是唯一消耗正增长的品类(+2.5%)，加大投入</div></div>
+</div>
+</div>
+
+</div>
+
+<script>
+// ===== 数据 =====
+const rooms=[
+  {name:'蒂洛薇水晶气垫',cat:'气垫',consume:2.71,creative_ids:259,hot_creatives:17,ctr:1.555,cvr:14.196,play3:28.535,cost_ratio:1.147,enter_rate:1.380,click_rate:99.496,order_rate:16.091},
+  {name:'蒂洛薇彩妆',cat:'粉膏',consume:1.44,creative_ids:166,hot_creatives:9,ctr:2.472,cvr:10.717,play3:35.089,cost_ratio:1.151,enter_rate:1.778,click_rate:106.188,order_rate:14.044},
+  {name:'蒂洛薇美妆',cat:'散粉',consume:0.92,creative_ids:172,hot_creatives:5,ctr:1.817,cvr:15.178,play3:38.305,cost_ratio:1.213,enter_rate:1.613,click_rate:90.373,order_rate:18.921},
+  {name:'蒂洛薇底妆',cat:'粉饼',consume:0.56,creative_ids:143,hot_creatives:4,ctr:1.791,cvr:16.186,play3:40.062,cost_ratio:1.255,enter_rate:1.509,click_rate:115.565,order_rate:16.673}
+];
+
+const peerAvg={creative_ids:337.67,hot_creatives:19.94,ctr:1.802,cvr:11.075,play3:38.196,cost_ratio:1.025,enter_rate:1.136,click_rate:97.369,order_rate:16.965};
+
+function score(val,avg,inverse){var r=inverse?(avg-val)/avg:(val-avg)/avg;return Math.max(0,Math.min(100,50+r*50));}
+function fmtPct(v){return(v>=0?'+':'')+v.toFixed(1)+'%';}
+function barClass(v){if(v>=65)return'good';if(v>=45)return'mid';return'bad';}
+
+const dimScores=rooms.map(function(r){return{
+  name:r.name,
+  creative_build:(score(r.creative_ids,peerAvg.creative_ids,false)+score(r.hot_creatives,peerAvg.hot_creatives,false))/2,
+  creative_eff:(score(r.ctr,peerAvg.ctr,false)+score(r.cvr,peerAvg.cvr,false)+score(r.play3,peerAvg.play3,false))/3,
+  volume_eff:score(r.cost_ratio,peerAvg.cost_ratio,true),
+  live_eff:(score(r.enter_rate,peerAvg.enter_rate,false)+score(r.click_rate,peerAvg.click_rate,false)+score(r.order_rate,peerAvg.order_rate,false))/3
+};});
+
+const dimNames=['创意基建','创意效率','拿量效率','直播间效率'];
+const dimKeys=['creative_build','creative_eff','volume_eff','live_eff'];
+
+// 雷达图
+var radarHtml='';
+dimScores.forEach(function(ds){
+  radarHtml+='<div class="radar-card"><div class="rc-name">'+ds.name+'</div><div class="radar-bars">';
+  dimKeys.forEach(function(k,i){var v=ds[k];radarHtml+='<div class="radar-bar-row"><span class="radar-bar-label">'+dimNames[i]+'</span><div class="radar-bar-track"><div class="radar-bar-fill '+barClass(v)+'" style="width:'+v+'%"></div></div><span class="radar-bar-val">'+v.toFixed(0)+'</span></div>';});
+  radarHtml+='</div></div>';
+});
+document.getElementById('radar-grid').innerHTML=radarHtml;
+
+// 房间卡片
+function makeRoomCards(cid,metrics,labels,peerVals,inv){
+  var html='';rooms.forEach(function(r){
+    html+='<div class="room-card"><div class="rn">'+r.name+'</div><div class="rc">'+r.cat+' | 日耗'+r.consume.toFixed(2)+'万</div><div class="metric-list">';
+    metrics.forEach(function(m,i){var val=r[m],avg=peerVals[i],diff=(val-avg)/avg*100,isInv=inv?inv[i]:false,good=isInv?(val<avg):(val>avg),cls=Math.abs(diff)<3?'neutral':(good?'good':'bad');
+    html+='<div class="metric-item"><span class="ml">'+labels[i]+'</span><span><span class="mv '+cls+'">'+val.toFixed(2)+'</span><span class="tag '+(good?'tag-green':'tag-red')+'">'+fmtPct(diff)+'</span></span></div>';});
+    html+='</div></div>';
+  });
+  document.getElementById(cid).innerHTML=html;
+}
+makeRoomCards('cb-rooms',['creative_ids','hot_creatives'],['创意ID数','爆款素材'],[peerAvg.creative_ids,peerAvg.hot_creatives],[false,false]);
+makeRoomCards('ce-rooms',['ctr','cvr','play3'],['CTR(%)','浅层CVR(%)','3秒完播(%)'],[peerAvg.ctr,peerAvg.cvr,peerAvg.play3],[false,false,false]);
+makeRoomCards('ve-rooms',['cost_ratio'],['计价率(Cost/GMV)'],[peerAvg.cost_ratio],[true]);
+makeRoomCards('le-rooms',['enter_rate','click_rate','order_rate'],['进播率(%)','商品点击率(%)','下单率(%)'],[peerAvg.enter_rate,peerAvg.click_rate,peerAvg.order_rate],[false,false,false]);
+
+function makeBarChart(cid,metrics,peerVals,labels,inv){
+  var html='';metrics.forEach(function(m,mi){var maxV=Math.max.apply(null,rooms.map(function(r){return r[m];}).concat([peerVals[mi]]));
+  html+='<div style="font-size:10px;color:#888;margin:10px 0 4px">▎'+labels[mi]+'（同行均值='+peerVals[mi].toFixed(2)+'）</div>';
+  rooms.forEach(function(r){var pct=r[m]/maxV*100,refPct=peerVals[mi]/maxV*100,isInv=inv?inv[mi]:false,good=isInv?(r[m]<peerVals[mi]):(r[m]>peerVals[mi]);
+  html+='<div class="bar-row"><span class="bar-label" title="'+r.name+'">'+r.name.substring(0,10)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+(good?'#81c784':'#ef5350')+'">'+r[m].toFixed(2)+'</div><div class="bar-ref" style="left:'+refPct+'%"></div></div></div>';});});
+  document.getElementById(cid).innerHTML=html;
+}
+makeBarChart('cb-chart',['creative_ids','hot_creatives'],[peerAvg.creative_ids,peerAvg.hot_creatives],['创意唯一性ID数','爆款素材(>10k)'],[false,false]);
+makeBarChart('ce-chart',['ctr','cvr','play3'],[peerAvg.ctr,peerAvg.cvr,peerAvg.play3],['CTR(%)','浅层CVR(%)','3秒完播率(%)'],[false,false,false]);
+makeBarChart('ve-chart',['cost_ratio'],[peerAvg.cost_ratio],['计价率(Cost/GMV) - 越低越好'],[true]);
+makeBarChart('le-chart',['enter_rate','click_rate','order_rate'],[peerAvg.enter_rate,peerAvg.click_rate,peerAvg.order_rate],['进播率(%)','商品点击率(%)','下单率(%)'],[false,false,false]);
+
+// ===== 整体日趋势SVG =====
+const dailyAll={dates:["06-01","06-02","06-03","06-04","06-05","06-06","06-07","06-08","06-09","06-10","06-11","06-12","06-13","06-14","06-15","06-16","06-17","06-18","06-19","06-20","06-21","06-22","06-23","06-24","06-25","06-26","06-27","06-28","06-29","06-30","07-01","07-02","07-03","07-04","07-05"],costs:[6.20,6.41,8.88,10.22,5.87,13.39,17.75,12.72,11.33,5.76,5.46,6.61,7.18,6.84,7.01,7.33,7.76,8.01,9.07,7.89,8.05,8.57,9.12,8.96,10.03,9.55,11.41,13.11,9.33,10.42,6.77,8.15,6.62,4.29,4.93],rois:[1.83,1.72,1.78,1.68,1.72,1.71,1.72,1.79,1.72,1.68,1.58,1.71,1.72,1.72,1.67,1.73,1.74,1.69,1.62,1.66,1.69,1.70,1.68,1.66,1.66,1.70,1.66,1.67,1.73,1.77,1.69,1.66,1.75,1.90,1.83],rates:[1.14,1.20,1.14,1.19,1.17,1.18,1.17,1.17,1.17,1.18,1.21,1.18,1.18,1.17,1.17,1.16,1.16,1.16,1.20,1.17,1.17,1.17,1.17,1.19,1.18,1.16,1.18,1.17,1.16,1.16,1.15,1.17,1.17,1.14,1.18]};
+
+(function(){
+  var d=dailyAll,n=d.dates.length,W=960,H=400,padL=55,padR=35,padT=30,padB=45;
+  var chartW=W-padL-padR,chartH=H-padT-padB;
+  var maxC=Math.max.apply(null,d.costs),meanC=d.costs.reduce(function(a,b){return a+b;},0)/n;
+  var roiMin=1.5,roiMax=2.0;
+  var barW=Math.max(5,Math.min(18,chartW/n-2));
+  var gap=(chartW-barW*n)/n;
+  var yMaxC=Math.ceil(maxC*1.1);
+  var rateLineY=padT+(1-(1.2-0.8)/1.2)*chartH;
+
+  var svg='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="max-width:100%;background:#fafbfc;border-radius:8px;border:1px solid #eee">';
+  // 网格
+  for(var g=0;g<=4;g++){var gy=padT+g*chartH/4;svg+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="#eee" stroke-width="1"/>';svg+='<text x="'+(padL-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="10" fill="#999">'+(yMaxC-yMaxC/4*g).toFixed(0)+'</text>';}
+  // 左Y轴
+  svg+='<text x="12" y="'+(padT+chartH/2)+'" text-anchor="middle" font-size="11" fill="#e74c3c" transform="rotate(-90,12,'+(padT+chartH/2)+')">消耗(万元)</text>';
+  // 右Y轴 ROI
+  for(var g2=0;g2<=4;g2++){var ry=padT+g2*chartH/4,rVal=roiMin+(roiMax-roiMin)/4*g2;svg+='<text x="'+(W-4)+'" y="'+(ry+4)+'" text-anchor="start" font-size="10" fill="#3498db">'+rVal.toFixed(2)+'</text>';}
+  svg+='<text x="'+(W-8)+'" y="'+(padT+chartH/2)+'" text-anchor="middle" font-size="11" fill="#3498db" transform="rotate(90,'+(W-8)+','+(padT+chartH/2)+')">下单ROI</text>';
+  // 计价率1.2线
+  svg+='<line x1="'+padL+'" y1="'+rateLineY+'" x2="'+(W-padR)+'" y2="'+rateLineY+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="6,4"/>';
+  svg+='<text x="'+(W-padR-2)+'" y="'+(rateLineY-4)+'" text-anchor="end" font-size="9" fill="#e74c3c">计价率1.2</text>';
+  // 日均消耗线
+  var avgCY=padT+chartH-(meanC/yMaxC)*chartH;
+  svg+='<line x1="'+padL+'" y1="'+avgCY+'" x2="'+(W-padR)+'" y2="'+avgCY+'" stroke="#999" stroke-width="1" stroke-dasharray="3,5"/>';
+  svg+='<text x="'+(padL+4)+'" y="'+(avgCY-3)+'" font-size="9" fill="#999">均值 '+meanC.toFixed(1)+'万</text>';
+  // 柱状图
+  for(var i=0;i<n;i++){var cx=padL+i*(barW+gap)+gap/2,ch=(d.costs[i]/yMaxC)*chartH,cy=padT+chartH-ch;var color=d.rates[i]>1.2?'#e74c3c':'#81c784';svg+='<rect x="'+cx+'" y="'+cy+'" width="'+barW+'" height="'+ch+'" fill="'+color+'" rx="1"><title>'+d.dates[i]+' 消耗:'+d.costs[i].toFixed(2)+'万 ROI:'+d.rois[i].toFixed(2)+' 计价率:'+d.rates[i].toFixed(2)+'</title></rect>';}
+  // ROI折线
+  var pts=[];for(var i=0;i<n;i++){if(d.rois[i]<=0)continue;var rx=padL+i*(barW+gap)+gap/2+barW/2,rpy=padT+chartH-((d.rois[i]-roiMin)/(roiMax-roiMin))*chartH;pts.push(rx.toFixed(1)+','+rpy.toFixed(1));}
+  svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#3498db" stroke-width="2"/>';
+  for(var i=0;i<n;i++){if(d.rois[i]<=0)continue;var rpx=padL+i*(barW+gap)+gap/2+barW/2,rppy=padT+chartH-((d.rois[i]-roiMin)/(roiMax-roiMin))*chartH;svg+='<circle cx="'+rpx+'" cy="'+rppy+'" r="2.5" fill="#3498db" stroke="#fff" stroke-width="1"><title>ROI:'+d.rois[i].toFixed(2)+'</title></circle>';}
+  // X轴
+  for(var i=0;i<n;i+=Math.max(1,Math.floor(n/12))){var lx=padL+i*(barW+gap)+gap/2+barW/2;svg+='<text x="'+lx+'" y="'+(H-padB+15)+'" text-anchor="middle" font-size="9" fill="#888">'+d.dates[i]+'</text>';svg+='<line x1="'+lx+'" y1="'+(padT+chartH)+'" x2="'+lx+'" y2="'+(padT+chartH+4)+'" stroke="#ddd"/>';}
+  // 图例
+  svg+='<rect x="'+(padL+10)+'" y="'+(padT-22)+'" width="12" height="12" fill="#81c784" rx="2"/>';svg+='<text x="'+(padL+26)+'" y="'+(padT-12)+'" font-size="10" fill="#555">正常</text>';
+  svg+='<rect x="'+(padL+70)+'" y="'+(padT-22)+'" width="12" height="12" fill="#e74c3c" rx="2"/>';svg+='<text x="'+(padL+86)+'" y="'+(padT-12)+'" font-size="10" fill="#555">计价率>1.2</text>';
+  svg+='<line x1="'+(padL+170)+'" y1="'+(padT-16)+'" x2="'+(padL+200)+'" y2="'+(padT-16)+'" stroke="#3498db" stroke-width="2"/>';svg+='<text x="'+(padL+204)+'" y="'+(padT-12)+'" font-size="10" fill="#555">下单ROI</text>';
+  svg+='</svg>';
+  document.getElementById('daily-chart').innerHTML=svg;
+})();
+
+// ===== 分品类趋势 =====
+const catDaily={
+  "蒂洛薇水晶气垫":{dates:["06-01","06-02","06-03","06-04","06-05","06-06","06-07","06-08","06-09","06-10","06-11","06-12","06-13","06-14","06-15","06-16","06-17","06-18","06-19","06-20","06-21","06-22","06-23","06-24","06-25","06-26","06-27","06-28","06-29","06-30","07-01","07-02","07-03","07-04","07-05"],costs:[2.51,2.46,3.65,5.32,2.27,5.95,8.94,7.11,5.95,2.55,2.56,3.20,3.59,3.13,3.44,3.66,3.56,4.53,5.18,4.34,3.67,4.10,4.43,4.79,5.15,4.71,5.10,7.14,5.17,5.08,3.38,4.36,3.50,2.11,2.78],rois:[1.86,1.70,1.80,1.67,1.70,1.68,1.67,1.80,1.76,1.66,1.59,1.74,1.74,1.73,1.69,1.76,1.73,1.73,1.65,1.66,1.72,1.68,1.71,1.66,1.68,1.74,1.68,1.71,1.74,1.80,1.72,1.64,1.77,1.93,1.83],rates:[1.14,1.20,1.15,1.19,1.17,1.19,1.19,1.16,1.16,1.19,1.21,1.17,1.17,1.17,1.16,1.15,1.16,1.14,1.19,1.17,1.15,1.17,1.16,1.18,1.16,1.15,1.17,1.16,1.15,1.15,1.14,1.18,1.16,1.14,1.19]},
+  "蒂洛薇彩妆":{dates:["06-01","06-02","06-03","06-04","06-05","06-06","06-07","06-08","06-09","06-10","06-11","06-12","06-13","06-14","06-15","06-16","06-17","06-18","06-19","06-20","06-21","06-22","06-23","06-24","06-25","06-26","06-27","06-28","06-29","06-30","07-01","07-02","07-03","07-04","07-05"],costs:[2.23,1.86,2.91,3.08,1.85,4.22,4.38,2.73,2.38,1.52,1.30,1.68,1.92,2.02,1.81,1.83,2.13,1.79,1.82,1.61,1.92,2.14,2.16,1.99,2.24,2.15,2.73,2.63,1.88,2.45,1.69,1.83,1.45,1.09,1.05],rois:[1.80,1.73,1.82,1.72,1.78,1.72,1.72,1.74,1.67,1.67,1.61,1.67,1.70,1.69,1.64,1.69,1.76,1.62,1.55,1.46,1.68,1.73,1.65,1.61,1.65,1.68,1.64,1.64,1.73,1.76,1.68,1.69,1.75,1.86,1.79],rates:[1.14,1.17,1.14,1.17,1.14,1.18,1.18,1.18,1.17,1.20,1.21,1.18,1.17,1.18,1.20,1.17,1.16,1.21,1.22,1.22,1.18,1.17,1.17,1.20,1.17,1.16,1.18,1.17,1.16,1.15,1.16,1.16,1.18,1.14,1.17]},
+  "蒂洛薇美妆":{dates:["06-01","06-02","06-03","06-04","06-05","06-06","06-07","06-08","06-09","06-10","06-11","06-12","06-13","06-14","06-15","06-16","06-17","06-18","06-19","06-20","06-21","06-22","06-23","06-24","06-25","06-26","06-27","06-28","06-29","06-30","07-01","07-02","07-03","07-04","07-05"],costs:[1.01,1.38,1.45,1.25,1.18,2.33,3.25,2.08,2.21,1.06,1.01,1.09,1.01,1.05,1.14,1.18,1.29,1.06,1.43,1.34,1.78,1.64,1.80,1.56,1.92,2.00,2.67,2.50,1.62,2.14,1.16,1.44,1.15,0.74,0.69],rois:[1.82,1.42,1.73,1.60,1.66,1.71,1.74,1.82,1.72,1.72,1.55,1.71,1.73,1.71,1.63,1.68,1.67,1.62,1.62,1.66,1.65,1.66,1.67,1.65,1.62,1.66,1.62,1.60,1.66,1.69,1.66,1.63,1.72,1.91,1.86],rates:[1.16,1.29,1.17,1.24,1.20,1.18,1.15,1.18,1.17,1.17,1.23,1.18,1.20,1.18,1.19,1.19,1.19,1.20,1.22,1.19,1.20,1.19,1.19,1.21,1.21,1.18,1.21,1.20,1.19,1.17,1.18,1.19,1.17,1.15,1.19]},
+  "蒂洛薇底妆":{dates:["06-01","06-02","06-03","06-04","06-05","06-06","06-07","06-08","06-09","06-10","06-11","06-12","06-13","06-14","06-15","06-16","06-17","06-18","06-19","06-20","06-21","06-22","06-23","06-24","06-25","06-26","06-27","06-28","06-29","06-30","07-01","07-02","07-03","07-04","07-05"],costs:[0.54,0.45,0.77,0.39,0.44,0.66,2.19,0.60,1.52,1.26,1.81,0.56,2.68,3.67,1.24,0.71,0.39,0.41,0.73,0.57,0.24,0.25,0.36,0.34,0.15,0.37,0.52,0.31,0.20,0.23,0.19,0.47,0.16,0.19,0.62],rois:[1.67,1.42,1.66,1.42,1.60,1.30,1.57,1.71,1.48,1.57,1.45,1.60,1.67,1.68,1.56,1.23,1.44,1.34,1.69,1.71,1.04,1.33,1.42,1.32,1.65,1.28,1.09,1.01,1.72,1.27,1.28,1.78,1.13,1.94,1.82],rates:[1.21,1.48,1.19,1.36,1.25,1.47,1.20,1.20,1.29,1.20,1.32,1.32,1.15,1.19,1.29,1.62,1.39,1.51,1.23,1.20,2.03,1.50,1.42,1.51,1.28,1.55,1.80,1.81,1.18,1.48,1.65,1.06,1.91,1.09,1.19]}
+};
+
+(function(){
+  var catKeys=Object.keys(catDaily);
+  var tabsHtml='';catKeys.forEach(function(k,i){tabsHtml+='<button class="cat-tab-btn" data-key="'+k+'" style="padding:6px 10px;border:none;background:'+(i===0?'#c0392b':'#f0f2f5')+';color:'+(i===0?'#fff':'#666')+';cursor:pointer;font-size:11px;border-radius:6px;line-height:1.3">'+k+'</button>';});
+  document.getElementById('cat-tabs').innerHTML=tabsHtml;
+  
+  function renderCat(key){
+    var d=catDaily[key],n=d.dates.length,W=960,H=340,padL=55,padR=35,padT=30,padB=40;
+    var chartW=W-padL-padR,chartH=H-padT-padB;
+    var maxC=Math.max.apply(null,d.costs),yMaxC=Math.ceil(maxC*1.1);
+    var barW=Math.max(5,Math.min(18,chartW/n-2)),gap=(chartW-barW*n)/n;
+    var roiMin=1.4,roiMax=2.0;
+    var rateLineY=padT+(1-(1.2-0.8)/1.2)*chartH;
+    var highPr=d.rates.filter(function(v){return v>1.2;}).length;
+    var avgC=d.costs.reduce(function(a,b){return a+b;},0)/n;
+    
+    var svg='<svg width="100%" viewBox="0 0 '+W+' '+H+'" style="max-width:100%;background:#fafbfc;border-radius:8px;border:1px solid #eee">';
+    for(var g=0;g<=4;g++){var gy=padT+g*chartH/4;svg+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="#eee" stroke-width="1"/>';svg+='<text x="'+(padL-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="10" fill="#999">'+(yMaxC-yMaxC/4*g).toFixed(0)+'</text>';}
+    svg+='<text x="12" y="'+(padT+chartH/2)+'" text-anchor="middle" font-size="10" fill="#e74c3c" transform="rotate(-90,12,'+(padT+chartH/2)+')">消耗(万)</text>';
+    for(var g2=0;g2<=4;g2++){var ry=padT+g2*chartH/4,rVal=roiMin+(roiMax-roiMin)/4*g2;svg+='<text x="'+(W-4)+'" y="'+(ry+4)+'" text-anchor="start" font-size="9" fill="#3498db">'+rVal.toFixed(2)+'</text>';}
+    svg+='<line x1="'+padL+'" y1="'+rateLineY+'" x2="'+(W-padR)+'" y2="'+rateLineY+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="6,4"/>';
+    for(var i=0;i<n;i++){var cx=padL+i*(barW+gap)+gap/2,ch=(d.costs[i]/yMaxC)*chartH,cy=padT+chartH-ch;var color=d.rates[i]>1.2?'#e74c3c':'#81c784';svg+='<rect x="'+cx+'" y="'+cy+'" width="'+barW+'" height="'+ch+'" fill="'+color+'" rx="1"><title>'+d.dates[i]+' 消耗:'+d.costs[i].toFixed(2)+'万 ROI:'+d.rois[i].toFixed(2)+' 计价率:'+d.rates[i].toFixed(2)+'</title></rect>';}
+    var pts=[];for(var i=0;i<n;i++){if(d.rois[i]<=0)continue;var rx=padL+i*(barW+gap)+gap/2+barW/2,rpy=padT+chartH-((d.rois[i]-roiMin)/(roiMax-roiMin))*chartH;pts.push(rx.toFixed(1)+','+rpy.toFixed(1));}
+    svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#3498db" stroke-width="2"/>';
+    for(var i=0;i<n;i+=Math.max(1,Math.floor(n/12))){var lx=padL+i*(barW+gap)+gap/2+barW/2;svg+='<text x="'+lx+'" y="'+(H-padB+12)+'" text-anchor="middle" font-size="8" fill="#888">'+d.dates[i]+'</text>';}
+    svg+='</svg>';
+    svg+='<div style="font-size:11px;color:#888;margin-top:4px">日均消耗 <b>'+avgC.toFixed(2)+'万</b> | 计价率>1.2共 <b style="color:'+(highPr>10?'#e74c3c':'#333')+'">'+highPr+'天</b> ('+(highPr/n*100).toFixed(0)+'%)</div>';
+    document.getElementById('cat-chart').innerHTML=svg;
+  }
+  renderCat(catKeys[0]);
+  
+  document.getElementById('cat-tabs').addEventListener('click',function(e){
+    var btn=e.target.closest('button');
+    if(!btn)return;
+    document.querySelectorAll('#cat-tabs button').forEach(function(b){b.style.background='#f0f2f5';b.style.color='#666';});
+    btn.style.background='#c0392b';btn.style.color='#fff';
+    renderCat(btn.dataset.key);
+  });
+})();
+</script>
+</body>
+</html>
